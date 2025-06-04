@@ -45,10 +45,8 @@ jobs:
           git remote set-url origin https://x-access-token:${{ secrets.GIT_TOKEN }}@github.com/${{ github.repository }}
 
 
-      - name: Commit updated posted.json
+      - name: Commit and push changes
         run: |
-          git config --global user.email "killervapors02@gmail.com"
-          git config --global user.name "GitHub Actions Bot"
           git add posted.json
-          git commit -m "Update posted.json" || echo "No changes to commit"
+          git commit -m "Update posted.json"
           git push
