@@ -62,29 +62,41 @@ async function postToPinterest({ imagePath, title, link, description, boardName,
         await createFramedImage(imagePath, outputImage, index);
         })();
     const browser = await puppeteer.launch({
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
 //   const browser = await puppeteer.launch({ headless: false });
-  const page = await browser.newPage();
+    const page = await browser.newPage();
 
-  await page.goto('https://www.pinterest.com/login/', { waitUntil: 'networkidle2' });
+    await page.goto('https://www.pinterest.com/login/', { waitUntil: 'networkidle2' });
 
-  // Log in
-  await page.type('input[name="id"]', process.env.PINTEREST_EMAIL);
-  await page.type('input[name="password"]', process.env.PINTEREST_PASSWORD);
-  await page.click('button[type="submit"]');
-  await page.waitForNavigation({ waitUntil: 'networkidle2' });
+    // Log in
+    await page.type('input[name="id"]', process.env.PINTEREST_EMAIL);
+    await page.type('input[name="password"]', process.env.PINTEREST_PASSWORD);
+    await page.click('button[type="submit"]');
+    await page.waitForNavigation({ waitUntil: 'networkidle2' });
 
-  // Navigate to Pin builder
-  await page.goto('https://www.pinterest.com/pin-builder/', { waitUntil: 'networkidle2' });
+    await page.waitForSelector('button[aria-label="Accounts"]');
+    await page.click('button[aria-label="Accounts"]');
 
-  // Upload image
-  const fileInput = await page.$('input[type="file"]');
-  await fileInput.uploadFile(outputImage);
+    await page.waitForSelector('#HeaderAccountOptionsFlyout-item-1');
+    await page.click('#HeaderAccountOptionsFlyout-item-1');
 
-  // Wait for image upload to finish
-  //await page.waitForSelector('[aria-label="Uploaded image"]', { timeout: 15000 });
-  const subtitleSelector = 'div[data-test-id="subtitle"]';
+    await page.waitForNavigation({ waitUntil: 'networkidle2' });
+
+    // await page.goto('https://in.pinterest.com/business/hub/', { waitUntil: 'networkidle2' });
+
+    // await page.waitForNavigation({ waitUntil: 'networkidle2' });
+    // Navigate to Pin builder
+    await page.goto('https://in.pinterest.com/pin-creation-tool/', { waitUntil: 'networkidle2' });
+
+    // Upload image
+    const fileInput = await page.$('input[type="file"]');
+    await fileInput.uploadFile(outputImage);
+
+    // Wait for image upload to finish
+    //await page.waitForSelector('[aria-label="Uploaded image"]', { timeout: 15000 });
+    // const subtitleSelector = 'div[data-test-id="subtitle"]';
 
 //   // Wait for the subtitle div to appear
 //   await page.waitForSelector(subtitleSelector, { timeout: 20000 });
@@ -96,13 +108,40 @@ async function postToPinterest({ imagePath, title, link, description, boardName,
 //   if (subtitleText.toLowerCase().includes('changes stored')) {
 //     console.log('✅ Confirmed: Changes stored!');
     // Fill in title, description, and link
+    await new Promise(resolve => setTimeout(resolve, 3000));
     await page.type('#storyboard-selector-title', title);
-    // await page.type('div[role="textbox"]', description);
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    await page.click('div.public-DraftStyleDefault-block');
-    await page.keyboard.type(description);
+    await page.type('div[role="textbox"]', description);
+    //await page.waitForNavigation({ waitUntil: 'networkidle2' });
+
+    // await page.waitForSelector('textarea[placeholder="Add your title"]');
+    // await page.type('textarea[placeholder="Add your title"]', title);
+
+    // await page.waitForSelector('div.DraftEditor-editorContainer div[contenteditable="true"]');
+    // await page.focus('div.DraftEditor-editorContainer div[contenteditable="true"]');
+    // await page.keyboard.type(title+' - For more information visit https://www.technologymanias.com');
+
+    // await page.evaluate(() => {
+    //     const buttons = [...document.querySelectorAll('button')];
+    //     const btn = buttons.find(b => b.innerText.includes('Add alt text'));
+    //     if (btn) btn.click();
+    //     });
+
+    // await page.waitForSelector('textarea[placeholder="Explain what people can see in the Pin"]');
+    // await page.type('textarea[placeholder="Explain what people can see in the Pin"]', title+" - Technology Manias");
+
+    // await page.waitForSelector('div[data-test-id="pin-draft-link"] textarea[placeholder="Add a destination link"]');
+
+    // await page.type('div[data-test-id="pin-draft-link"] textarea[placeholder="Add a destination link"]', link);
+
+    // await page.waitForSelector('div[data-test-id="board-dropdown-save-button"]');
+    // await page.click('div[data-test-id="board-dropdown-save-button"]'); 
+
+
+    // await new Promise(resolve => setTimeout(resolve, 3000));
+    // await page.click('div.public-DraftStyleDefault-block');
+    // await page.keyboard.type(description);
     // await page.type('input[placeholder="Add a destination link"]', link);
-    await page.type('#WebsiteField', link);
+    // await page.type('#WebsiteField', link);
 
     // Select board
     // await page.waitForSelector('[data-test-id="board-dropdown-select-button"]', { timeout: 10000 });
@@ -131,6 +170,8 @@ async function postToPinterest({ imagePath, title, link, description, boardName,
     //         throw new Error("Could not find the 'Choose a board' div");
     //     }
  //await new Promise(resolve => setTimeout(resolve, 4000));
+    await page.waitForSelector('#WebsiteField', { visible: true });
+    await page.type('#WebsiteField', link);
     try{
         await new Promise(resolve => setTimeout(resolve, 2000));
         const dropdowns = await page.$$('div');
@@ -159,19 +200,21 @@ async function postToPinterest({ imagePath, title, link, description, boardName,
     {
         console.log(e);
     }
+    await page.waitForSelector('[data-test-id="storyboard-creation-nav-done"] button', { visible: true });
+    await page.click('[data-test-id="storyboard-creation-nav-done"] button');
     // Publish the pin
-    await new Promise(resolve => setTimeout(resolve, 2000));// Small delay for board selection to register
+    // await new Promise(resolve => setTimeout(resolve, 2000));// Small delay for board selection to register
     // await page.click('button:has-text("Publish")');
-    const publishDivs = await page.$$('div');
+    // const publishDivs = await page.$$('div');
 
-    for (const div of publishDivs) {
-    const text = await page.evaluate(el => el.innerText.trim(), div);
-    if (text.toLowerCase() === 'publish') {
-        await div.click();
-        console.log('Clicked the "Publish" button.');
-        break;
-    }
-    }
+    // for (const div of publishDivs) {
+    // const text = await page.evaluate(el => el.innerText.trim(), div);
+    // if (text.toLowerCase() === 'publish') {
+    //     await div.click();
+    //     console.log('Clicked the "Publish" button.');
+    //     break;
+    // }
+    // }
 
     console.log(`Pinterest post published to board "${boardName}": ${title}`);
 

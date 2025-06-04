@@ -290,21 +290,21 @@ async function run() {
       try {
         let postedSomething = false;
 
-        if (!alreadyPosted.facebook) {
-          const success = await postToFacebook(title, link);
-          if (success) {
-            await savePostedUrl('facebook', link);
-            postedSomething = true;
-          }
-        }
+        // if (!alreadyPosted.facebook) {
+        //   const success = await postToFacebook(title, link);
+        //   if (success) {
+        //     await savePostedUrl('facebook', link);
+        //     postedSomething = true;
+        //   }
+        // }
 
-        if (!postedSomething && !alreadyPosted.instagram) {
-          const success = await postToInstagram(imageUrl, title);
-          if (success) {
-            await savePostedUrl('instagram', link);
-            postedSomething = true;
-          }
-        }
+        // if (!postedSomething && !alreadyPosted.instagram) {
+        //   const success = await postToInstagram(imageUrl, title);
+        //   if (success) {
+        //     await savePostedUrl('instagram', link);
+        //     postedSomething = true;
+        //   }
+        // }
 
         if (!postedSomething && !alreadyPosted.pinterest) {
           const success = await postToPinterest(imageUrl, title, link, ab);
