@@ -16,7 +16,7 @@ const FB_PAGE_ID = process.env.FACEBOOK_PAGE_ID;
 const USER_ACCESS_TOKEN = process.env.USER_ACCESS_TOKEN;
 
 const SOCIALS = ['facebook', 'instagram', 'pinterest', 'vk', 'twitter'];
-console.log(process.env.RSS_URLS);
+//console.log(process.env.RSS_URLS);
 async function getPostedUrls() {
   let posted = {};
 
@@ -128,7 +128,7 @@ async function postToInstagram(imageUrl, caption) {
     }
   );
   console.log(`Instagram posted with caption: ${caption}`);
-  await savePostedUrl('instagram', caption);
+  // await savePostedUrl('instagram', caption);
   return true;
 }
 
@@ -260,67 +260,78 @@ async function isPostedOnAllPlatforms(link) {
 
 async function run() {
   const rssUrls = process.env.RSS_URLS.split(',').map(url => url.trim());
-  let ab=0;
+  let ab = 0;
+
   for (const rssUrl of rssUrls) {
-  const feed = await parser.parseURL(rssUrl);
+    const feed = await parser.parseURL(rssUrl);
 
-  for (const item of feed.items.slice().reverse()) {
-    const { title, link, enclosure } = item;
-    const imageUrl = enclosure?.url;
+    for (const item of feed.items.slice().reverse()) {
+      const { title, link, enclosure } = item;
+      const imageUrl = enclosure?.url;
 
-    if (!imageUrl) {
-      console.warn(`No valid image for Instagram post: ${title}, image - ${imageUrl} skipping Instagram.`);
-      continue;
-    }
-
-    const posted = await getPostedUrls();
-
-    // Check which socials haven't posted this link yet
-    const needsPosting = SOCIALS.filter(s => !(posted[s]?.includes(link)));
-
-    if (needsPosting.length === 0) {
-      console.log(`Already posted on all socials: ${link}`);
-      continue;
-    }
-
-    try {
-      // Post only on socials that need posting
-      for (const social of needsPosting) {
-        let postedSuccess = false;
-
-        if (social === 'facebook') {
-          postedSuccess = await postToFacebook(title, link);
-        } else if (social === 'instagram') {
-          postedSuccess = await postToInstagram(imageUrl, title);
-        } else if (social === 'pinterest') {
-          postedSuccess = await postToPinterest(imageUrl, title, link, ab);
-        }
-        // Add VK, Twitter if needed here...
-
-        if (postedSuccess) {
-          await savePostedUrl(social, link);
-
-          // If you want to break after posting on one platform, uncomment:
-          break;
-        }
+      if (!imageUrl) {
+        console.warn(`No valid image for Instagram post: ${title}, image - ${imageUrl} skipping.`);
+        continue;
       }
 
-      console.log(`Posted on missing socials for: ${title}`);
+      const posted = await getPostedUrls(); // { facebook: [], instagram: [], pinterest: [] }
 
-    } catch (err) {
-      console.error(`Failed to post: ${title}`);
+      const alreadyPosted = {
+        facebook: posted.facebook?.includes(link),
+        instagram: posted.instagram?.includes(link),
+        pinterest: posted.pinterest?.includes(link),
+      };
 
-      if (err.response) {
-        console.error('Status:', err.response.status);
-        console.error('Data:', err.response.data);
-      } else {
-        console.error('Error:', err.message);
+      if (alreadyPosted.facebook && alreadyPosted.instagram && alreadyPosted.pinterest) {
+        console.log(`Already posted on all socials: ${link}`);
+        continue;
+      }
+
+      try {
+        let postedSomething = false;
+
+        if (!alreadyPosted.facebook) {
+          const success = await postToFacebook(title, link);
+          if (success) {
+            await savePostedUrl('facebook', link);
+            postedSomething = true;
+          }
+        }
+
+        if (!postedSomething && !alreadyPosted.instagram) {
+          const success = await postToInstagram(imageUrl, title);
+          if (success) {
+            await savePostedUrl('instagram', link);
+            postedSomething = true;
+          }
+        }
+
+        if (!postedSomething && !alreadyPosted.pinterest) {
+          const success = await postToPinterest(imageUrl, title, link, ab);
+          if (success) {
+            await savePostedUrl('pinterest', link);
+            postedSomething = true;
+          }
+        }
+
+        if (postedSomething) {
+          console.log(`Posted to at least one social: ${title}`);
+          break; // Move to next RSS feed
+        }
+
+      } catch (err) {
+        console.error(`Failed to post: ${title}`);
+        if (err.response) {
+          console.error('Status:', err.response.status);
+          console.error('Data:', err.response.data);
+        } else {
+          console.error('Error:', err.message);
+        }
       }
     }
-    ab = ab + 1;
+
+    ab += 1;
   }
-}
-
 }
 
 run();
