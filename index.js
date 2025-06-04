@@ -280,14 +280,15 @@ async function run() {
         const Pinterest = await postToPinterest(imageUrl, title, link ,ab);
         // await postToVK(`${title} ${link}`, link);
         // await postToTwitter(title, link, imageUrl);
-        if (Pinterest) {
-          await savePostedUrl('pinterest', item.link);
-        }
         if (Facebook) {
           await savePostedUrl('facebook', item.link);
         }
         if (Instagram) {
           await savePostedUrl('instagram', item.link);
+        }
+        if (Pinterest) {
+          await savePostedUrl('pinterest', item.link);
+          break;
         }
 
         console.log(`Posted all socials: ${title}`);

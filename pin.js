@@ -62,7 +62,7 @@ async function postToPinterest({ imagePath, title, link, description, boardName,
         await createFramedImage(imagePath, outputImage, index);
         })();
 
-  const browser = await puppeteer.launch({ headless: true });
+  const browser = await puppeteer.launch({ headless: false });
   const page = await browser.newPage();
 
   await page.goto('https://www.pinterest.com/login/', { waitUntil: 'networkidle2' });
