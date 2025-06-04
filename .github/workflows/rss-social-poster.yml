@@ -5,6 +5,9 @@ on:
     - cron: '*/22 * * * *' # Every 30 minutes
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   post-to-social:
     runs-on: ubuntu-latest
@@ -39,13 +42,10 @@ jobs:
         run: node index.js
 
       - name: Set up Git credentials
-        env:
-          GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
-          REPO: ${{ github.repository }}
         run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git remote set-url origin https://x-access-token:$GIT_TOKEN@github.com/$REPO
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
 
 
       - name: Commit and push changes
