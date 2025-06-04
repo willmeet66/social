@@ -39,10 +39,13 @@ jobs:
         run: node index.js
 
       - name: Set up Git credentials
+        env:
+          GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
+          REPO: ${{ github.repository }}
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git remote set-url origin https://x-access-token:${{ secrets.GIT_TOKEN }}@github.com/${{ github.repository }}
+          git remote set-url origin https://x-access-token:$GIT_TOKEN@github.com/$REPO
 
 
       - name: Commit and push changes
