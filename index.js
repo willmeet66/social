@@ -16,7 +16,7 @@ const FB_PAGE_ID = process.env.FACEBOOK_PAGE_ID;
 const USER_ACCESS_TOKEN = process.env.USER_ACCESS_TOKEN;
 
 const SOCIALS = ['facebook', 'instagram', 'pinterest', 'vk', 'twitter'];
-
+console.log(process.env.RSS_URLS);
 async function getPostedUrls() {
   let posted = {};
 
