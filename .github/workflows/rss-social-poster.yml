@@ -8,6 +8,7 @@ on:
 jobs:
   post-to-social:
     runs-on: ubuntu-latest
+    environment: socials
 
     steps:
       - name: Checkout repo
@@ -23,19 +24,19 @@ jobs:
 
       - name: Create .env file from secrets
         run: |
-          echo "RSS_URLS=${{ secrets.RSS_URLS }}" >> .env
-          echo "FACEBOOK_PAGE_ID=${{ secrets.FACEBOOK_PAGE_ID }}" >> .env
-          echo "USER_ACCESS_TOKEN=${{ secrets.USER_ACCESS_TOKEN }}" >> .env
-          echo "INSTAGRAM_USER_ID=${{ secrets.INSTAGRAM_USER_ID }}" >> .env
-          echo "PINTEREST_EMAIL=${{ secrets.PINTEREST_EMAIL }}" >> .env
-          echo "PINTEREST_PASSWORD=${{ secrets.PINTEREST_PASSWORD }}" >> .env
+          echo "RSS_URLS=${{ secrets.RSS_URLS }}" >> $GITHUB_ENV
+          echo "FACEBOOK_PAGE_ID=${{ secrets.FACEBOOK_PAGE_ID }}" >> $GITHUB_ENV
+          echo "USER_ACCESS_TOKEN=${{ secrets.USER_ACCESS_TOKEN }}" >> $GITHUB_ENV
+          echo "INSTAGRAM_USER_ID=${{ secrets.INSTAGRAM_USER_ID }}" >> $GITHUB_ENV
+          echo "PINTEREST_EMAIL=${{ secrets.PINTEREST_EMAIL }}" >> $GITHUB_ENV
+          echo "PINTEREST_PASSWORD=${{ secrets.PINTEREST_PASSWORD }}" >> $GITHUB_ENV
 
       - name: Run social poster script
         run: node index.js
 
       - name: Commit updated posted.json
         run: |
-          git config --global user.email "bot@github.com"
+          git config --global user.email "killervapors02@gmail.com"
           git config --global user.name "GitHub Actions Bot"
           git add posted.json
           git commit -m "Update posted.json" || echo "No changes to commit"
