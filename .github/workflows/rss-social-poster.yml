@@ -2,7 +2,7 @@ name: RSS Social Poster
 
 on:
   schedule:
-    - cron: '*/22 * * * *' # Every 30 minutes
+    - cron: '*/10 * * * *' # Every 30 minutes
   workflow_dispatch:
 
 permissions:
