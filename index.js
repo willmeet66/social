@@ -275,8 +275,8 @@ async function run() {
       }
 
       try {
-        const Facebook = await postToFacebook(title, link);
-        const Instagram = await postToInstagram(imageUrl, title);
+        // const Facebook = await postToFacebook(title, link);
+        // const Instagram = await postToInstagram(imageUrl, title);
         const Pinterest = await postToPinterest(imageUrl, title, link ,ab);
         // await postToVK(`${title} ${link}`, link);
         // await postToTwitter(title, link, imageUrl);
