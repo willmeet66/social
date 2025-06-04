@@ -153,8 +153,8 @@ async function postToPinterest(imageUrl, title, link, ab) {
       index: ab
     });
   
-  fs.readdirSync(folder).forEach(file => {
-  const filePath = path.join(folder, file);
+  fs.readdirSync(IMG).forEach(file => {
+  const filePath = path.join(IMG, file);
   if (fs.lstatSync(filePath).isFile()) {
     fs.unlinkSync(filePath);
   }
@@ -249,63 +249,78 @@ async function downloadImage(url, filename) {
     writer.on('error', reject);
   });
 }
+async function isPostedOnAllPlatforms(link) {
+  const postedData = await getPostedUrls(); // Load posted.json or wherever saved
+  return (
+    postedData.facebook.includes(link) &&
+    postedData.instagram.includes(link) &&
+    postedData.pinterest.includes(link)
+  );
+}
 
 async function run() {
   const rssUrls = process.env.RSS_URLS.split(',').map(url => url.trim());
   let ab=0;
   for (const rssUrl of rssUrls) {
-    const feed = await parser.parseURL(rssUrl);
+  const feed = await parser.parseURL(rssUrl);
 
-    // removed feed.items to fetch older post to be posted
-    for (const item of feed.items.slice().reverse()) {
-      const { title, link, enclosure } = item;
-      const imageUrl = enclosure?.url;
+  for (const item of feed.items.slice().reverse()) {
+    const { title, link, enclosure } = item;
+    const imageUrl = enclosure?.url;
 
-      if (!imageUrl) {
-          console.warn(`No valid image for Instagram post: ${title}, image - ${imageUrl} skipping Instagram.`);
-          continue;
+    if (!imageUrl) {
+      console.warn(`No valid image for Instagram post: ${title}, image - ${imageUrl} skipping Instagram.`);
+      continue;
+    }
+
+    const posted = await getPostedUrls();
+
+    // Check which socials haven't posted this link yet
+    const needsPosting = SOCIALS.filter(s => !(posted[s]?.includes(link)));
+
+    if (needsPosting.length === 0) {
+      console.log(`Already posted on all socials: ${link}`);
+      continue;
+    }
+
+    try {
+      // Post only on socials that need posting
+      for (const social of needsPosting) {
+        let postedSuccess = false;
+
+        if (social === 'facebook') {
+          postedSuccess = await postToFacebook(title, link);
+        } else if (social === 'instagram') {
+          postedSuccess = await postToInstagram(imageUrl, title);
+        } else if (social === 'pinterest') {
+          postedSuccess = await postToPinterest(imageUrl, title, link, ab);
         }
+        // Add VK, Twitter if needed here...
 
-      // We only post if at least one social hasn't posted the link yet
-      const posted = await getPostedUrls();
-      const allPosted = SOCIALS.every(s => posted[s]?.includes(link) || false);
-      if (allPosted) {
-        console.log(`Already posted on all socials: ${link}`);
-        continue;
-      }
+        if (postedSuccess) {
+          await savePostedUrl(social, link);
 
-      try {
-        // const Facebook = await postToFacebook(title, link);
-        // const Instagram = await postToInstagram(imageUrl, title);
-        const Pinterest = await postToPinterest(imageUrl, title, link ,ab);
-        // await postToVK(`${title} ${link}`, link);
-        // await postToTwitter(title, link, imageUrl);
-        if (Facebook) {
-          await savePostedUrl('facebook', item.link);
-        }
-        if (Instagram) {
-          await savePostedUrl('instagram', item.link);
-        }
-        if (Pinterest) {
-          await savePostedUrl('pinterest', item.link);
+          // If you want to break after posting on one platform, uncomment:
           break;
         }
+      }
 
-        console.log(`Posted all socials: ${title}`);
-      } catch (err) {
-          console.error(`Failed to post: ${title}`);
+      console.log(`Posted on missing socials for: ${title}`);
 
-          if (err.response) {
-            console.error('Status:', err.response.status);
-            console.error('Data:', err.response.data);
-          } else {
-            console.error('Error:', err.message);
-          }
-        }
-      //break; // Only post first new item per feed
+    } catch (err) {
+      console.error(`Failed to post: ${title}`);
+
+      if (err.response) {
+        console.error('Status:', err.response.status);
+        console.error('Data:', err.response.data);
+      } else {
+        console.error('Error:', err.message);
+      }
     }
-    ab=ab+1;
+    ab = ab + 1;
   }
+}
+
 }
 
 run();
